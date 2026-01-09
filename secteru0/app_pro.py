@@ -537,6 +537,25 @@ def main():
     )
     
     # State management
+    # Store previous params to detect changes
+    if 'prev_params' not in st.session_state:
+        st.session_state.prev_params = {}
+    
+    current_params = {
+        'n': n_satellites, 
+        'K': coupling_K, 
+        'radius': target_radius, 
+        'noise': noise_level
+    }
+    
+    # Detect parameter changes - auto-pause if changed during auto-play
+    if st.session_state.get('auto_play', False):
+        if current_params != st.session_state.prev_params:
+            st.session_state.auto_play = False
+            st.toast("⏸️ Parameters changed - auto-play paused", icon="ℹ️")
+    
+    st.session_state.prev_params = current_params.copy()
+    
     if 'constellation' not in st.session_state or st.sidebar.button("↻ Reset Constellation"):
         st.session_state.constellation = SatelliteConstellation(
             n_satellites=n_satellites,
