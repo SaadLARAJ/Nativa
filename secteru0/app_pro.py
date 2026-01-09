@@ -594,6 +594,17 @@ def main():
         help="Delay between animation frames. Lower = faster animation."
     )
     
+    # Simulation speed - smaller dt = slower physics = more visible movement
+    sim_speed = st.sidebar.select_slider(
+        "Simulation Speed",
+        options=["Ultra Slow", "Slow", "Normal", "Fast"],
+        value="Slow",
+        help="Controls how fast satellites converge. Use 'Ultra Slow' to see each movement clearly."
+    )
+    
+    dt_map = {"Ultra Slow": 0.01, "Slow": 0.02, "Normal": 0.05, "Fast": 0.1}
+    dt = dt_map[sim_speed]
+    
     # Auto-play logic
     if st.session_state.auto_play:
         import time
@@ -608,8 +619,8 @@ def main():
             st.session_state.auto_play = False
             st.toast("⏱️ Timeout reached (300s). Auto-play stopped.", icon="⚠️")
         else:
-            # Run 1 step only for smooth animation
-            constellation.step(coupling_K)
+            # Run 1 step with controlled dt for smooth visible animation
+            constellation.step(coupling_K, dt=dt)
             time.sleep(frame_delay_ms / 1000.0)  # Convert ms to seconds
             st.rerun()
     
