@@ -543,6 +543,11 @@ def main():
             target_radius=target_radius,
             noise=noise_level
         )
+        st.session_state.auto_play = False
+    
+    # Initialize auto_play state if not exists
+    if 'auto_play' not in st.session_state:
+        st.session_state.auto_play = False
     
     constellation = st.session_state.constellation
     constellation.noise = noise_level
@@ -550,14 +555,39 @@ def main():
         sat.target_radius = target_radius
     
     # Run controls
-    col_run, col_step = st.sidebar.columns(2)
-    with col_run:
-        if st.button("▶ Run 100 steps"):
-            for _ in range(100):
-                constellation.step(coupling_K)
+    st.sidebar.markdown("### ▶️ Simulation Controls")
+    
+    col_play, col_step = st.sidebar.columns(2)
+    with col_play:
+        if st.button("▶️ Auto-Play" if not st.session_state.auto_play else "⏸️ Pause"):
+            st.session_state.auto_play = not st.session_state.auto_play
     with col_step:
-        if st.button("⏵ Step"):
+        if st.button("⏭️ +1 Step"):
             constellation.step(coupling_K)
+    
+    # Speed control
+    play_speed = st.sidebar.slider("Animation Speed", 1, 10, 5, 
+                                   help="Steps per second during auto-play")
+    
+    # Auto-play logic
+    if st.session_state.auto_play:
+        import time
+        
+        # Check auto-stop conditions
+        current_sync = constellation.compute_order_parameter()
+        
+        if current_sync > 0.95:
+            st.session_state.auto_play = False
+            st.toast("✓ Constellation synchronized! Auto-play stopped.", icon="🎯")
+        elif constellation.time > 300:
+            st.session_state.auto_play = False
+            st.toast("⏱️ Timeout reached (300s). Auto-play stopped.", icon="⚠️")
+        else:
+            # Run a few steps then rerun to show progress
+            for _ in range(play_speed):
+                constellation.step(coupling_K)
+            time.sleep(0.1)  # Small delay for visual effect
+            st.rerun()
     
     # Main layout
     col1, col2 = st.columns([2.2, 1])
