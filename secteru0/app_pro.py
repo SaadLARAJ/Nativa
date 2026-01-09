@@ -584,9 +584,15 @@ def main():
         if st.button("⏭️ +1 Step"):
             constellation.step(coupling_K)
     
-    # Speed control
-    play_speed = st.sidebar.slider("Animation Speed", 1, 10, 5, 
-                                   help="Steps per second during auto-play")
+    # Speed control - delay between frames in ms
+    frame_delay_ms = st.sidebar.slider(
+        "Frame Delay (ms)", 
+        min_value=50, 
+        max_value=500, 
+        value=100,
+        step=50,
+        help="Delay between animation frames. Lower = faster animation."
+    )
     
     # Auto-play logic
     if st.session_state.auto_play:
@@ -602,10 +608,9 @@ def main():
             st.session_state.auto_play = False
             st.toast("⏱️ Timeout reached (300s). Auto-play stopped.", icon="⚠️")
         else:
-            # Run a few steps then rerun to show progress
-            for _ in range(play_speed):
-                constellation.step(coupling_K)
-            time.sleep(0.1)  # Small delay for visual effect
+            # Run 1 step only for smooth animation
+            constellation.step(coupling_K)
+            time.sleep(frame_delay_ms / 1000.0)  # Convert ms to seconds
             st.rerun()
     
     # Main layout
